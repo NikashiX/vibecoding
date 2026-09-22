@@ -1,0 +1,10 @@
+{
+  "name": "vibe-security-lab-js",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix sistema-ruim install && npm --prefix sistema-bom install",
+    "dev:ruim": "npm --prefix sistema-ruim run dev",
+    "dev:bom": "npm --prefix sistema-bom run dev",
+    "build": "npm --prefix sistema-ruim run build && npm --prefix sistema-bom run build"
+  }
+}
