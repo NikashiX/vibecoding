@@ -1,12 +1,60 @@
-import {useEffect,useState} from 'react';
+import { useEffect, useState } from 'react';
+import { api } from './lib/api.js';
+import ActivityPage from './pages/ActivityPage.jsx';
+import DashboardLayout from './components/DashboardLayout.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import OverviewPage from './pages/OverviewPage.jsx';
+import ParticipantsPage from './pages/ParticipantsPage.jsx';
 
-const api=async(path,options={})=>{const response=await fetch(`/api${path}`,{headers:{'Content-Type':'application/json'},...options});if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.error||'Erro inesperado.');}return response.status===204?null:response.json();};
-export default function App(){const[user,setUser]=useState(undefined);useEffect(()=>{api('/me').then(x=>setUser(x.user)).catch(()=>setUser(null));},[]);if(user===undefined)return <div className="loading">Carregando…</div>;return user?<Dashboard user={user} onLogout={async()=>{await api('/logout',{method:'POST'});setUser(null);}}/>:<Login onLogin={setUser}/>;}
-function Login({onLogin}){const[username,setUsername]=useState('');const[password,setPassword]=useState('');const[error,setError]=useState('');const submit=async e=>{e.preventDefault();setError('');try{const x=await api('/login',{method:'POST',body:JSON.stringify({username,password})});onLogin(x.user);}catch(err){setError(err.message);}};return <main className="login-shell"><section className="login-intro"><Brand/><div className="intro-copy"><p className="eyebrow">AMBIENTE DE TREINAMENTO · 02</p><h1>Observe.<br/><em>Proteja.</em><br/>Aprenda.</h1><p>Uma versão reforçada do laboratório, com autenticação preparada para resistir a entradas maliciosas.</p></div><div className="status-line"><span className="pulse"/> ambiente seguro ativo <span className="mono">127.0.0.1</span></div></section><section className="login-card-wrap"><div className="login-card"><div className="card-heading"><div><p className="eyebrow">ACESSO SEGURO</p><h2>Bem-vindo de volta.</h2></div><span className="lock-icon">⌁</span></div>{error&&<div className="alert">{error}</div>}<form onSubmit={submit}><label>Identificador</label><input value={username} onChange={e=>setUsername(e.target.value)} placeholder="ex.: marina" autoComplete="username" maxLength="50" required/><label>Chave de acesso</label><input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="••••••••" autoComplete="current-password" maxLength="128" required/><button>Entrar no laboratório <span>↗</span></button></form><div className="demo-hint"><span>DEMO</span><div>marina <b>/</b> vibe2026</div></div><p className="lab-note">Consulta parametrizada e senhas armazenadas com hash seguro.</p></div><div className="card-footer"><span>VIBE SECURITY LAB</span><span>seguro / v1.0.0</span></div></section></main>}
-function Brand(){return <div className="brand"><span className="brand-mark">VX</span><span>VIBE / SECURITY LAB</span></div>}
-function Dashboard({user,onLogout}){const[data,setData]=useState(null);const[page,setPage]=useState('overview');useEffect(()=>{api('/dashboard').then(setData);},[]);if(!data)return <div className="loading">Carregando painel…</div>;const goTo=(event,next)=>{event.preventDefault();setPage(next);};return <><aside className="sidebar"><Brand/><nav><a href="#overview" className={page==='overview'?'active':''} onClick={event=>goTo(event,'overview')}>◈ Visão geral</a><a href="#participants" className={page==='participants'?'active':''} onClick={event=>goTo(event,'participants')}>◌ Participantes</a><a href="#activity" className={page==='activity'?'active':''} onClick={event=>goTo(event,'activity')}>↯ Atividade</a></nav><div className="side-bottom"><div className="side-status"><span className="pulse"/> sistema online</div><button className="logout" onClick={onLogout}>Sair da conta <span>↗</span></button></div></aside><main className="dashboard-main"><header className="topbar"><div><p className="eyebrow">PAINEL DE CONTROLE / {page==='overview'?'VISÃO GERAL':page==='participants'?'PARTICIPANTES':'ATIVIDADE'}</p><h1>{page==='overview'?`Olá, ${user.name.split(' ')[0]}.`:page==='participants'?'Participantes':'Atividade do laboratório'}</h1></div><div className="profile"><div className="avatar">{user.name[0]}</div><div><strong>{user.name}</strong><small>{user.role}</small></div></div></header>{page==='overview'?<><div className="lab-banner"><div className="banner-icon">✓</div><div><strong>Versão segura do laboratório</strong><p>Consulta parametrizada, senha com hash e sessão protegida estão ativas.</p></div><span className="mono">SECURE / MODE</span></div><Stats data={data}/><Content data={data} user={user}/></>:page==='participants'?<Participants data={data}/>:<ActivityPage user={user}/>}<footer><span>VIBE SECURITY LAB © 2026</span><span>{page==='overview'?'dados: IBGE / SIDRA':'simulação local'}</span></footer></main></>}
-function Stats({data}){return <section className="stats"><article><span className="stat-label">USUÁRIOS NO BANCO</span><strong>{data.users.length}</strong><small>desde a inicialização</small></article><article><span className="stat-label">POPULAÇÃO DO BRASIL</span><strong>{data.population?.value.toLocaleString('pt-BR')||'—'}</strong><small><i>IBGE</i> estimativa {data.population?.year||'indisponível'}</small></article><article><span className="stat-label">STATUS DA SESSÃO</span><strong className="green-text">ATIVA</strong><small>autenticado agora</small></article></section>}
-function Content({data,user}){return <section className="content-grid"><article className="panel" id="users"><div className="panel-title"><div><p className="eyebrow">DADOS PERSISTIDOS</p><h2>Participantes do lab</h2></div><span className="count-pill">{data.users.length} registros</span></div><div className="table-wrap"><table><thead><tr><th>NOME</th><th>IDENTIFICADOR</th><th>PERFIL</th><th>ENTRADA</th></tr></thead><tbody>{data.users.map(p=><tr key={p.username}><td><strong>{p.name}</strong></td><td className="mono muted">@{p.username}</td><td><span className="role-pill">{p.role}</span></td><td className="mono muted">{p.created_at.slice(0,10)}</td></tr>)}</tbody></table></div></article><article className="panel" id="activity"><div className="panel-title"><div><p className="eyebrow">TELEMETRIA</p><h2>Atividade recente</h2></div><span className="live-dot">● AO VIVO</span></div><div className="activity-item"><span className="activity-marker green"/><div><strong>Sessão iniciada</strong><p>Login autorizado para {user.username}</p></div><time>agora</time></div><div className="activity-item"><span className="activity-marker"/><div><strong>IBGE consultado</strong><p>População estimada via API SIDRA</p></div><time>agora</time></div></article></section>}
-function Participants({data}){const[query,setQuery]=useState('');const[role,setRole]=useState('todos');const roles=[...new Set(data.users.map(person=>person.role))];const people=data.users.filter(person=>(role==='todos'||person.role===role)&&`${person.name} ${person.username}`.toLowerCase().includes(query.toLowerCase()));return <section className="page-stack"><div className="stats"><article><span className="stat-label">TOTAL DE PARTICIPANTES</span><strong>{data.users.length}</strong><small>contas cadastradas</small></article><article><span className="stat-label">ADMINISTRADORES</span><strong>{data.users.filter(person=>person.role.toLowerCase().includes('admin')).length}</strong><small>acesso administrativo</small></article><article><span className="stat-label">ANALISTAS</span><strong>{data.users.filter(person=>person.role.toLowerCase().includes('analista')).length}</strong><small>acesso de laboratório</small></article></div><article className="panel"><div className="panel-title"><div><p className="eyebrow">CONTAS CADASTRADAS</p><h2>Todos os participantes</h2></div><span className="count-pill">{people.length} de {data.users.length}</span></div><div className="toolbar"><input aria-label="Buscar participante" placeholder="Buscar por nome ou identificador…" value={query} onChange={event=>setQuery(event.target.value)}/><select aria-label="Filtrar por perfil" value={role} onChange={event=>setRole(event.target.value)}><option value="todos">Todos os perfis</option>{roles.map(item=><option key={item} value={item}>{item}</option>)}</select></div><div className="table-wrap"><table><thead><tr><th>NOME</th><th>IDENTIFICADOR</th><th>PERFIL</th><th>CADASTRO</th><th>STATUS</th></tr></thead><tbody>{people.map(person=><tr key={person.username}><td><strong>{person.name}</strong></td><td className="mono muted">@{person.username}</td><td><span className="role-pill">{person.role}</span></td><td className="mono muted">{person.created_at.slice(0,10)}</td><td><span className="status-tag"><i/> ativo</span></td></tr>)}</tbody></table>{people.length===0&&<p className="empty-state">Nenhum participante encontrado.</p>}</div></article><p className="simulation-note">Lista demonstrativa baseada nas contas do banco local deste laboratório.</p></section>}
-const simulatedEvents=[{time:'agora',type:'Sessão',title:'Login realizado',detail:'Sessão autenticada para o usuário atual.',tone:'green'},{time:'há 2 min',type:'Segurança',title:'Tentativa de acesso registrada',detail:'Uma tentativa de login inválida foi simulada e registrada.',tone:'amber'},{time:'há 8 min',type:'Dados',title:'Painel de participantes consultado',detail:'A lista de contas locais foi carregada para esta demonstração.',tone:'blue'},{time:'há 14 min',type:'Integração',title:'Consulta ao serviço do IBGE',detail:'Consulta de população concluída ou marcada como indisponível.',tone:'blue'},{time:'há 26 min',type:'Sistema',title:'Laboratório iniciado',detail:'API local e interface do laboratório ficaram disponíveis.',tone:'green'},{time:'há 41 min',type:'Segurança',title:'Revisão de autenticação',detail:'Evento fictício para demonstrar a trilha de auditoria.',tone:'amber'}];
-function ActivityPage({user}){const[filter,setFilter]=useState('todos');const events=simulatedEvents.filter(event=>filter==='todos'||event.type===filter);return <section className="page-stack"><div className="activity-summary"><div><span className="stat-label">EVENTOS NA SIMULAÇÃO</span><strong>{simulatedEvents.length}</strong><small>linha do tempo demonstrativa</small></div><label>Categoria<select value={filter} onChange={event=>setFilter(event.target.value)}><option value="todos">Todas</option>{[...new Set(simulatedEvents.map(event=>event.type))].map(type=><option key={type} value={type}>{type}</option>)}</select></label></div><article className="panel"><div className="panel-title"><div><p className="eyebrow">TRILHA DE AUDITORIA</p><h2>Atividade recente</h2></div><span className="simulation-badge">SIMULADA</span></div><div className="timeline">{events.map((event,index)=><div className="timeline-item" key={`${event.title}-${index}`}><span className={`timeline-marker ${event.tone}`}/><div className="timeline-copy"><div className="timeline-heading"><strong>{event.title}</strong><span>{event.type}</span></div><p>{event.detail}{index===0?` Usuário: ${user.username}.`:''}</p></div><time>{event.time}</time></div>)}</div>{events.length===0&&<p className="empty-state">Não há eventos nesta categoria.</p>}</article><p className="simulation-note">Eventos fictícios para demonstração da interface. Nenhuma atividade é gravada no servidor.</p></section>}
+export default function App() {
+  const [user, setUser] = useState(undefined);
+
+  useEffect(() => {
+    api('/me')
+      .then(({ user: currentUser }) => setUser(currentUser))
+      .catch(() => setUser(null));
+  }, []);
+
+  async function handleLogout() {
+    await api('/logout', { method: 'POST' });
+    setUser(null);
+  }
+
+  if (user === undefined) {
+    return <div className="loading">Carregando…</div>;
+  }
+
+  if (!user) {
+    return <LoginPage onLogin={setUser} />;
+  }
+
+  return (
+    <AuthenticatedApp user={user} onLogout={handleLogout} />
+  );
+}
+
+function AuthenticatedApp({ user, onLogout }) {
+  const [dashboard, setDashboard] = useState(null);
+  const [page, setPage] = useState('overview');
+
+  useEffect(() => {
+    api('/dashboard').then(setDashboard);
+  }, []);
+
+  if (!dashboard) {
+    return <div className="loading">Carregando painel…</div>;
+  }
+
+  return (
+    <DashboardLayout
+      user={user}
+      page={page}
+      onNavigate={setPage}
+      onLogout={onLogout}
+    >
+      {page === 'overview' && <OverviewPage data={dashboard} user={user} />}
+      {page === 'participants' && <ParticipantsPage users={dashboard.users} />}
+      {page === 'activity' && <ActivityPage user={user} />}
+    </DashboardLayout>
+  );
+}
