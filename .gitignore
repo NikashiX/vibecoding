@@ -1,2 +1,7 @@
 data/*.sqlite
 data/*.sqlite-journal
+**/node_modules/
+**/dist/
+**/data/*.sqlite*
+**/.env
+.npm-cache/

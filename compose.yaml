@@ -1,0 +1,44 @@
+services:
+  sistema-ruim:
+    build:
+      context: .
+      dockerfile: sistema-ruim/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - "${SISTEMA_RUIM_PORT:-3001}:3001"
+    volumes:
+      - dados-sistema-ruim:/workspace/sistema-ruim/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/me').then(r=>process.exit([200,401].includes(r.status)?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  sistema-bom:
+    build:
+      context: .
+      dockerfile: sistema-bom/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      SESSION_SECRET: "${SESSION_SECRET:?Defina SESSION_SECRET nas variaveis do Dockploy}"
+      CAT_API_KEY: "${CAT_API_KEY:?Defina CAT_API_KEY nas variaveis do Dockploy}"
+    ports:
+      - "${SISTEMA_BOM_PORT:-3002}:3002"
+    volumes:
+      - dados-sistema-bom:/workspace/sistema-bom/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/api/me').then(r=>process.exit([200,401].includes(r.status)?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  dados-sistema-ruim:
+  dados-sistema-bom:

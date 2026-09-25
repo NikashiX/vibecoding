@@ -1,25 +1,35 @@
-# Vibe Security Lab
+# Vibe Security Lab — React + Node.js
 
-Laboratório local em PHP para demonstrar autenticação e uma falha de SQL Injection de forma controlada.
+Reimplementação do laboratório PHP em duas aplicações independentes:
 
-## Executar com Docker
+- `sistema-ruim`: exemplo propositalmente vulnerável a SQL Injection, apenas para uso local.
+- `sistema-bom`: versão corrigida com query parametrizada, bcrypt, sessão persistida, rate limit, Helmet e validação.
 
-Na pasta do projeto, execute:
+## Deploy no Dockploy
+
+Use `compose.yaml` como arquivo Compose e a raiz do repositorio como build context. O Compose constroi e executa os dois sistemas nas portas 3001 (ruim) e 3002 (bom), com volumes persistentes separados para os bancos SQLite.
+
+Cadastre no ambiente do servico `sistema-bom` as variaveis `SESSION_SECRET` (um segredo aleatorio longo) e `CAT_API_KEY` (sua chave da TheCatAPI). Nao coloque esses valores no Compose nem no repositorio. O Compose exige ambas as variaveis na hora do deploy. No Dockploy, configure os dominios encaminhando para `sistema-ruim:3001` e `sistema-bom:3002`.
+
+As portas publicadas podem ser alteradas com `SISTEMA_RUIM_PORT` e `SISTEMA_BOM_PORT`. O sistema ruim e intencionalmente vulneravel e deve ser publicado somente em ambiente de demonstracao controlado.
+
+## Como executar
+
+É necessário Node.js 20 ou superior. Na raiz do repositorio, instale tudo:
 
 ```bash
-docker compose up --build
+npm run install:all
 ```
 
-Acesse `http://localhost:8081/` no navegador. Para encerrar:
+Em dois terminais, execute:
 
 ```bash
-docker compose down
+npm run dev:ruim
+npm run dev:bom
 ```
 
-Login normal: `marina` / `vibe2026`.
+Acesse `http://localhost:5173` (ruim) e `http://localhost:5174` (bom). Em ambas, o login de demonstração é `marina` / `vibe2026`.
 
-O banco SQLite é criado automaticamente e fica persistido no volume `vibe_data`. A consulta vulnerável está isolada em `index.php` e identificada com o comentário `LAB`; não reutilize esse padrão em produção.
+Os bancos SQLite são criados em `sistema-ruim/data` e `sistema-bom/data`. A população do IBGE é buscada pelo backend; se a API estiver indisponível, a interface continua funcionando.
 
-## Comparar com a versão segura
-
-A versão corrigida está em `secure/` e pode ser acessada em `http://localhost:8081/secure/`. Ela usa consulta preparada e armazena as senhas com hash.
+> Nunca publique o sistema ruim. Ele concatena dados do usuário no SQL deliberadamente para demonstrar a falha do projeto original.
