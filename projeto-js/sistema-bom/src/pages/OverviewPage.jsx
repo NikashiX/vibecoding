@@ -1,9 +1,11 @@
 import StatsCards from '../components/StatsCards.jsx';
+import BrazilMap from '../components/BrazilMap.jsx';
 
 export default function OverviewPage({ data, user }) {
   return (
     <>
       <StatsCards data={data} />
+      <BrazilMap population={data.population} />
 
       <section className="content-grid">
         <article className="panel" id="users">

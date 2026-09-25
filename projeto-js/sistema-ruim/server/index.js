@@ -40,6 +40,63 @@ app.get('/api/dashboard', requireLogin, async (req,res) => {
   res.json({users,population:await population(),user:req.session.user});
 });
 function requireLogin(req,res,next){ if(!req.session.user)return res.status(401).json({error:'Não autenticado.'}); next(); }
-async function population(){try{const response=await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/2024/variaveis/9324?localidades=N1%5Ball%5D',{signal:AbortSignal.timeout(5000)});const data=await response.json();const value=data?.[0]?.variavel?.[0]?.resultados?.[0]?.series?.[0]?.serie?.['2024'];return Number.isFinite(Number(value))?{value:Number(value),year:2024}:null;}catch{return null;}}
+function populationRequestOptions() {
+  return {
+    headers: { Accept: 'application/json', 'User-Agent': 'VibeSecurityLab/1.0' },
+    signal: AbortSignal.timeout(8000),
+  };
+}
+
+async function population() {
+  try {
+    return await Promise.any([
+      populationFromSidra(),
+      populationFromAggregatesApi(),
+    ]);
+  } catch {
+    return null;
+  }
+}
+
+async function populationFromSidra() {
+  const response = await fetch(
+    'https://apisidra.ibge.gov.br/values/t/6579/n1/all/v/9324/p/last%201?formato=json',
+    populationRequestOptions(),
+  );
+  if (!response.ok) throw new Error(`SIDRA respondeu ${response.status}`);
+
+  const rows = await response.json();
+  const record = rows.slice(1).find((row) => row.D1C === '1' && row.V && row.V !== '...');
+  const value = Number(record?.V);
+  const year = Number(record?.D3C);
+
+  if (!Number.isFinite(value) || !Number.isFinite(year)) {
+    throw new Error('A resposta SIDRA não contém a população nacional.');
+  }
+
+  return { value, year };
+}
+
+async function populationFromAggregatesApi() {
+  const response = await fetch(
+    'https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/last%201/variaveis/9324?localidades=N1%5Ball%5D',
+    populationRequestOptions(),
+  );
+  if (!response.ok) throw new Error(`API de agregados respondeu ${response.status}`);
+
+  const data = await response.json();
+  const series = data?.[0]?.variavel?.[0]?.resultados?.[0]?.series?.[0]?.serie;
+  const year = Object.keys(series || {})
+    .filter((period) => /^\d{4}$/.test(period))
+    .sort()
+    .at(-1);
+  const value = Number(series?.[year]);
+
+  if (!Number.isFinite(value) || !year) {
+    throw new Error('A API de agregados não retornou população.');
+  }
+
+  return { value, year: Number(year) };
+}
 if(process.env.NODE_ENV==='production')app.use(express.static(join(root,'dist')));
 app.listen(process.env.PORT || 3001,()=>console.log('Sistema ruim: API em http://localhost:3001'));
