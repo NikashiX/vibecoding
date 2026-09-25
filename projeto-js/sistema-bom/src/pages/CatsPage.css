@@ -1,0 +1,13 @@
+.cats-intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.cats-intro h2 { margin: 0 0 8px; font-size: 1.55rem; }
+.cats-intro p:not(.eyebrow) { margin: 0; color: var(--muted); font-size: .82rem; }
+.cats-refresh { border: 1px solid #dce3d5; border-radius: 3px; padding: 11px 15px; background: #fff; color: #17221f; font: inherit; cursor: pointer; white-space: nowrap; }
+.cats-refresh:disabled { cursor: wait; opacity: .6; }
+.cats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.cat-card { overflow: hidden; border: 1px solid #e6e9e2; background: #fff; }
+.cat-card img { display: block; width: 100%; height: 190px; object-fit: cover; background: #f1f4ec; }
+.cat-card > div { padding: 14px; }
+.cat-card strong { font-size: .88rem; }
+.cat-card p { display: -webkit-box; overflow: hidden; min-height: 2.7em; margin: 6px 0 0; color: var(--muted); font-size: .72rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.cats-loading { padding: 20px 0; }
+@media (max-width: 650px) { .cats-intro { align-items: start; flex-direction: column; } }

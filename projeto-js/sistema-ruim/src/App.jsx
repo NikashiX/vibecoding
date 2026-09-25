@@ -159,10 +159,11 @@ function Dashboard({ user, onLogout }) {
     overview: 'VISÃO GERAL',
     participants: 'PARTICIPANTES',
     activity: 'ATIVIDADE',
+    cats: 'THECATAPI',
   }[page];
   const pageTitle = page === 'overview'
     ? `Olá, ${user.name.split(' ')[0]}.`
-    : page === 'participants' ? 'Participantes' : 'Atividade do laboratório';
+    : page === 'participants' ? 'Participantes' : page === 'activity' ? 'Atividade do laboratório' : 'Galeria de gatos';
 
   return (
     <>
@@ -177,6 +178,9 @@ function Dashboard({ user, onLogout }) {
           </a>
           <a href="#activity" className={page === 'activity' ? 'active' : ''} onClick={(event) => navigate(event, 'activity')}>
             ↯ Atividade
+          </a>
+          <a href="#cats" className={page === 'cats' ? 'active' : ''} onClick={(event) => navigate(event, 'cats')}>
+            Gatos
           </a>
         </nav>
         <div className="side-bottom">
@@ -248,6 +252,7 @@ function Dashboard({ user, onLogout }) {
 
         {page === 'participants' && <Participants data={data} />}
         {page === 'activity' && <ActivityPage user={user} />}
+        {page === 'cats' && <CatsPage />}
 
         <footer>
           <span>VIBE SECURITY LAB © 2026</span>
@@ -443,6 +448,59 @@ function ActivityPage({ user }) {
         {events.length === 0 && <p className="empty-state">Não há eventos nesta categoria.</p>}
       </article>
       <p className="simulation-note">Eventos fictícios para demonstração da interface. Nenhuma atividade é gravada no servidor.</p>
+    </section>
+  );
+}
+
+function CatsPage() {
+  const [cats, setCats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function loadCats() {
+    setLoading(true);
+    setError('');
+    try {
+      // Chave pública de demonstração da TheCatAPI: deliberadamente exposta neste sistema.
+      const response = await fetch('https://api.thecatapi.com/v1/images/search?limit=8&has_breeds=true', {
+        headers: { 'x-api-key': 'DEMO-API-KEY' },
+      });
+      if (!response.ok) throw new Error(`TheCatAPI respondeu com status ${response.status}.`);
+      setCats(await response.json());
+    } catch (requestError) {
+      setError(requestError.message || 'Não foi possível carregar as imagens.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadCats(); }, []);
+
+  return (
+    <section className="page-stack cats-page">
+      <div className="cats-intro">
+        <div>
+          <p className="eyebrow">INTEGRAÇÃO EXTERNA · THECATAPI</p>
+          <h2>Uma pausa para gatos.</h2>
+          <p>Imagens e raças carregadas diretamente no navegador.</p>
+        </div>
+        <button className="cats-refresh" type="button" onClick={loadCats} disabled={loading}>
+          {loading ? 'Carregando…' : '↻ Atualizar galeria'}
+        </button>
+      </div>
+      {error && <div className="alert" role="alert">{error}</div>}
+      {loading && <p className="loading cats-loading">Buscando imagens…</p>}
+      {!loading && !error && (
+        <div className="cats-grid">
+          {cats.map((cat) => (
+            <article className="cat-card" key={cat.id}>
+              <img src={cat.url} alt={cat.breeds?.[0]?.name ? `Gato da raça ${cat.breeds[0].name}` : 'Gato'} loading="lazy" />
+              <div><strong>{cat.breeds?.[0]?.name || 'Gato sem raça identificada'}</strong><p>{cat.breeds?.[0]?.temperament || 'Imagem aleatória da TheCatAPI'}</p></div>
+            </article>
+          ))}
+          {cats.length === 0 && <p className="empty-state">A API não retornou imagens nesta consulta.</p>}
+        </div>
+      )}
     </section>
   );
 }

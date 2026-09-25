@@ -4,17 +4,20 @@ const navigation = [
   { id: 'overview', label: '◈ Visão geral' },
   { id: 'participants', label: '◌ Participantes' },
   { id: 'activity', label: '↯ Atividade' },
+  { id: 'cats', label: 'Gatos' },
 ];
 
 const pageLabels = {
   overview: 'VISÃO GERAL',
   participants: 'PARTICIPANTES',
   activity: 'ATIVIDADE',
+  cats: 'THECATAPI',
 };
 
 const pageTitles = {
   participants: 'Participantes',
   activity: 'Atividade do laboratório',
+  cats: 'Galeria de gatos',
 };
 
 export default function DashboardLayout({

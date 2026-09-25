@@ -57,6 +57,21 @@ app.get('/api/dashboard',requireLogin,async(req,res)=>{
   const users=db.prepare('SELECT name, username, role, created_at FROM users ORDER BY id DESC').all();
   res.json({users,population:await population(),user:req.session.user});
 });
+app.get('/api/cats', requireLogin, async (req, res) => {
+  const apiKey = process.env.CAT_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'Configure CAT_API_KEY no arquivo .env do sistema bom.' });
+
+  try {
+    const response = await fetch('https://api.thecatapi.com/v1/images/search?limit=8&has_breeds=true', {
+      headers: { 'x-api-key': apiKey, Accept: 'application/json' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) return res.status(502).json({ error: `TheCatAPI respondeu com status ${response.status}.` });
+    return res.json(await response.json());
+  } catch {
+    return res.status(502).json({ error: 'Não foi possível consultar a TheCatAPI.' });
+  }
+});
 function requireLogin(req,res,next){if(!req.session.user)return res.status(401).json({error:'Não autenticado.'});next();}
 function populationRequestOptions() {
   return {

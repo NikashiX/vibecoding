@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from './lib/api.js';
 import ActivityPage from './pages/ActivityPage.jsx';
+import CatsPage from './pages/CatsPage.jsx';
 import DashboardLayout from './components/DashboardLayout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import OverviewPage from './pages/OverviewPage.jsx';
@@ -55,6 +56,7 @@ function AuthenticatedApp({ user, onLogout }) {
       {page === 'overview' && <OverviewPage data={dashboard} user={user} />}
       {page === 'participants' && <ParticipantsPage users={dashboard.users} />}
       {page === 'activity' && <ActivityPage user={user} />}
+      {page === 'cats' && <CatsPage />}
     </DashboardLayout>
   );
 }
